@@ -1,0 +1,12 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "username": "user1",
+      "password": "<Use genhash.js to generate password hash>"
+    }
+  ],
+  "sessionSecret": "mySecret",
+  "rootFilesPath": "files",
+  "port": 433
+}
