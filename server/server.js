@@ -91,8 +91,9 @@ app.get("/api/current_user", (req, res) => {
   }
 });
 
-app.get("/api/files",ensureAuthenticated, (req, res) => {
-  const filesPath = path.join(__dirname, config.rootFilesPath);
+app.get("/api/files/:subDir?",ensureAuthenticated, (req, res) => {
+  const subDir = req.params.subDir ? req.params.subDir : "";
+  const filesPath = path.join(__dirname, config.rootFilesPath, subDir);
   fs.readdir(filesPath, (err, files) => {
     if (err) {
       console.error(err);
@@ -124,7 +125,7 @@ app.get("/api/files",ensureAuthenticated, (req, res) => {
   });
 });
 
-app.get("/api/download/:filename",ensureAuthenticated, (req, res) => {
+app.get("/api/download/:filename", ensureAuthenticated, (req, res) => {
   const { filename } = req.params;
   const filePath = path.join(__dirname, config.rootFilesPath, filename);
 
