@@ -6,7 +6,7 @@ import path from "path-browserify";
 const FileList = ({ currentUser }) => {
   const [files, setFiles] = useState([]);
   const [subDir, setSubDir] = useState("");
-  const [downloadProgress, setDownloadProgress] = useState(null);
+  const [downloadProgress, setDownloadProgress] = useState({});
 
   const fetchFiles = async (dir) => {
     try {
@@ -30,6 +30,7 @@ const FileList = ({ currentUser }) => {
 
   const handleFileDownload = async (subDir, fileName) => {
     try {
+      setDownloadProgress((prevProgress) => ({ ...prevProgress, [fileName]: 0 }));
       const response = await fetch(`/api/download/${encodeURIComponent(path.join(subDir, fileName))}`);
       const reader = response.body.getReader();
       const contentLength = +response.headers.get("Content-Length");
@@ -43,7 +44,10 @@ const FileList = ({ currentUser }) => {
         }
         chunks.push(value);
         receivedLength += value.length;
-        setDownloadProgress(Math.round((receivedLength / contentLength) * 100));
+        setDownloadProgress((prevProgress) => ({
+          ...prevProgress,
+          [fileName]: Math.round((receivedLength / contentLength) * 100),
+        }));
       }
       const blob = new Blob(chunks);
       const url = window.URL.createObjectURL(blob);
@@ -53,10 +57,16 @@ const FileList = ({ currentUser }) => {
       document.body.appendChild(link);
       link.click();
       link.parentNode.removeChild(link);
-      setDownloadProgress(null);
+      setDownloadProgress((prevProgress) => {
+        const { [fileName]: _, ...restProgress } = prevProgress;
+        return restProgress;
+      });
     } catch (error) {
       console.error("Error downloading file:", error);
-      setDownloadProgress(null);
+      setDownloadProgress((prevProgress) => {
+        const { [fileName]: _, ...restProgress } = prevProgress;
+        return restProgress;
+      });
     }
   };
 
@@ -75,8 +85,8 @@ const FileList = ({ currentUser }) => {
             <span>
               {file.name}
               <button onClick={() => handleFileDownload(subDir, file.name)}>Download</button>
-              {downloadProgress !== null && (
-                <span> {downloadProgress}%</span>
+              {downloadProgress.hasOwnProperty(file.name) && (
+                <span> {downloadProgress[file.name]}%</span>
               )}
             </span>
           )}
