@@ -6,6 +6,7 @@ import path from "path-browserify";
 const FileList = ({ currentUser }) => {
   const [files, setFiles] = useState([]);
   const [subDir, setSubDir] = useState("");
+  const [downloadProgress, setDownloadProgress] = useState(null);
 
   const fetchFiles = async (dir) => {
     try {
@@ -30,7 +31,21 @@ const FileList = ({ currentUser }) => {
   const handleFileDownload = async (subDir, fileName) => {
     try {
       const response = await fetch(`/api/download/${encodeURIComponent(path.join(subDir, fileName))}`);
-      const blob = await response.blob();
+      const reader = response.body.getReader();
+      const contentLength = +response.headers.get("Content-Length");
+      let receivedLength = 0;
+
+      const chunks = [];
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) {
+          break;
+        }
+        chunks.push(value);
+        receivedLength += value.length;
+        setDownloadProgress(Math.round((receivedLength / contentLength) * 100));
+      }
+      const blob = new Blob(chunks);
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
@@ -38,8 +53,10 @@ const FileList = ({ currentUser }) => {
       document.body.appendChild(link);
       link.click();
       link.parentNode.removeChild(link);
+      setDownloadProgress(null);
     } catch (error) {
       console.error("Error downloading file:", error);
+      setDownloadProgress(null);
     }
   };
 
@@ -58,6 +75,9 @@ const FileList = ({ currentUser }) => {
             <span>
               {file.name}
               <button onClick={() => handleFileDownload(subDir, file.name)}>Download</button>
+              {downloadProgress !== null && (
+                <span> {downloadProgress}%</span>
+              )}
             </span>
           )}
         </li>
