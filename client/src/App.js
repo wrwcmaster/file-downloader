@@ -1,6 +1,9 @@
+// File: src/App.js
+
 import React, { useState, useEffect } from "react";
 import LoginForm from "./components/LoginForm";
 import FileList from "./components/FileList";
+import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 
 function App() {
   const [loggedIn, setLoggedIn] = useState(false);
@@ -30,15 +33,19 @@ function App() {
     setCurrentUser(user);
     setLoggedIn(true);
   };
-
   return (
-    <div className="App">
-      {loggedIn ? (
-        <FileList currentUser={currentUser} />
-      ) : (
-        <LoginForm onLogin={handleLogin} />
-      )}
-    </div>
+    <Router>
+      <div className="App">
+        <Routes>
+          <Route path="*" element={
+          loggedIn ? (
+            <FileList currentUser={currentUser} />
+          ) : (
+            <LoginForm onLogin={handleLogin} />
+          )}/>
+        </Routes>
+      </div>
+    </Router>
   );
 }
 

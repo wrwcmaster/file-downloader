@@ -2,11 +2,22 @@
 
 import React, { useState, useEffect } from "react";
 import path from "path-browserify";
+import { useNavigate, useLocation } from "react-router-dom";
 
 const FileList = ({ currentUser }) => {
   const [files, setFiles] = useState([]);
-  const [subDir, setSubDir] = useState("");
   const [downloadProgress, setDownloadProgress] = useState({});
+
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const getCurrentDir = () => {
+    return decodeURIComponent(location.pathname.slice(1));
+  };
+
+  const fetchFilesForCurrentDir = async () => {
+    fetchFiles(getCurrentDir());
+  };
 
   const fetchFiles = async (dir) => {
     try {
@@ -18,14 +29,19 @@ const FileList = ({ currentUser }) => {
     }
   };
 
-  useEffect(() => {  
-    fetchFiles(subDir);
+  useEffect(() => {
+    fetchFilesForCurrentDir();
   }, []);
+
+  useEffect(() => {
+    fetchFilesForCurrentDir();
+  }, [location]);
 
   const handleDirectoryClick = async (event, newSubDir) => {
     event.preventDefault();
-    setSubDir(newSubDir);
-    fetchFiles(newSubDir);
+    const fullDir = path.join(getCurrentDir(), newSubDir);
+    navigate(`/${fullDir}`);
+    fetchFiles(fullDir);
   };
 
   const handleFileDownload = async (subDir, fileName) => {
@@ -73,18 +89,18 @@ const FileList = ({ currentUser }) => {
   return (
     <div>
       <h1>Hello, {currentUser.username}!</h1>
-      <h2>File List - {subDir}</h2>
+      <h2>File List - {getCurrentDir()}</h2>
       <ul>
       {files.map((file, index) => (
         <li key={index}>
           {file.isDir ? (
-            <a href="#" onClick={(evt) => handleDirectoryClick(evt, path.join(subDir, file.name))}>
+            <a href="#" onClick={(evt) => handleDirectoryClick(evt, file.name)}>
               {file.name}
             </a>
           ) : (
             <span>
               {file.name}
-              <button onClick={() => handleFileDownload(subDir, file.name)}>Download</button>
+              <button onClick={() => handleFileDownload(getCurrentDir(), file.name)}>Download</button>
               {downloadProgress.hasOwnProperty(file.name) && (
                 <span> {downloadProgress[file.name]}%</span>
               )}
