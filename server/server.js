@@ -1,5 +1,5 @@
 // TODO: Download All
-// TODO: Safety check, do not access parent folder
+// TODO: CSS
 
 // Imports
 const express = require("express");
