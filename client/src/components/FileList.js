@@ -4,6 +4,12 @@ import React, { useState, useEffect } from "react";
 import path from "path-browserify";
 import { useNavigate, useLocation } from "react-router-dom";
 
+const DownloadStates = {
+  DOWNLOADING: 'downloading',
+  DONE: 'done',
+  ERROR: 'error',
+}
+
 const FileList = ({ currentUser }) => {
   const [files, setFiles] = useState([]);
   const [downloadProgress, setDownloadProgress] = useState({});
@@ -44,9 +50,13 @@ const FileList = ({ currentUser }) => {
     fetchFiles(fullDir);
   };
 
+  const updateDownloadProgress = (fileName, newProgress, newState) => {
+    setDownloadProgress((prevProgress) => ({ ...prevProgress, [fileName]: { progress: newProgress, state: newState }}));
+  }
+  
   const handleFileDownload = async (subDir, fileName) => {
     try {
-      setDownloadProgress((prevProgress) => ({ ...prevProgress, [fileName]: 0 }));
+      updateDownloadProgress(fileName, 0, DownloadStates.DOWNLOADING);
       const response = await fetch(`/api/download/${encodeURIComponent(path.join(subDir, fileName))}`);
       const reader = response.body.getReader();
       const contentLength = +response.headers.get("Content-Length");
@@ -60,10 +70,7 @@ const FileList = ({ currentUser }) => {
         }
         chunks.push(value);
         receivedLength += value.length;
-        setDownloadProgress((prevProgress) => ({
-          ...prevProgress,
-          [fileName]: Math.round((receivedLength / contentLength) * 100),
-        }));
+        updateDownloadProgress(fileName, Math.round((receivedLength / contentLength) * 100), DownloadStates.DOWNLOADING);
       }
       const blob = new Blob(chunks);
       const url = window.URL.createObjectURL(blob);
@@ -73,16 +80,10 @@ const FileList = ({ currentUser }) => {
       document.body.appendChild(link);
       link.click();
       link.parentNode.removeChild(link);
-      setDownloadProgress((prevProgress) => {
-        const { [fileName]: _, ...restProgress } = prevProgress;
-        return restProgress;
-      });
+      updateDownloadProgress(fileName, 100, DownloadStates.DONE);
     } catch (error) {
       console.error("Error downloading file:", error);
-      setDownloadProgress((prevProgress) => {
-        const { [fileName]: _, ...restProgress } = prevProgress;
-        return restProgress;
-      });
+      updateDownloadProgress(fileName, 0, DownloadStates.ERROR);
     }
   };
 
@@ -101,9 +102,12 @@ const FileList = ({ currentUser }) => {
             <span>
               {file.name}
               <button onClick={() => handleFileDownload(getCurrentDir(), file.name)}>Download</button>
-              {downloadProgress.hasOwnProperty(file.name) && (
-                <span> {downloadProgress[file.name]}%</span>
-              )}
+              {(() => {
+                if (!downloadProgress.hasOwnProperty(file.name)) return;
+                const progressObj = downloadProgress[file.name];
+                if (!progressObj.state) return;
+                return <span>{" "}{progressObj.state === DownloadStates.DOWNLOADING ? `${progressObj.progress}%` : progressObj.state}</span>;
+              })()}
             </span>
           )}
         </li>

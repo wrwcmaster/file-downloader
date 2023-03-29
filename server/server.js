@@ -1,7 +1,6 @@
 // TODO: Download All
 // TODO: Safety check, do not access parent folder
-// TODO: Download button state
-// TODO: Test multi layer sub folders
+
 // Imports
 const express = require("express");
 const https = require("https");
