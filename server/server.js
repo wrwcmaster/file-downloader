@@ -97,13 +97,32 @@ app.get("/api/current_user", (req, res) => {
 app.get("/api/files/:subDir?",ensureAuthenticated, (req, res) => {
   const subDir = req.params.subDir ? req.params.subDir : "";
   const filesPath = path.join(__dirname, config.rootFilesPath, subDir);
+
+  // Check if the requested file is located within the rootFilesPath directory
+  if (!filesPath.startsWith(path.join(__dirname, config.rootFilesPath))) {
+    console.error("Attempted to access outside of rootFilesPath directory");
+    return res.status(403).send("Forbidden");
+  }
+
   fs.readdir(filesPath, (err, files) => {
     if (err) {
       console.error(err);
       res.status(500).send("Error reading files");
     } else {
       const fileList = [];
-
+      
+      // Add ".." dir
+      if (subDir.length > 0) {
+        fileList.push({
+          name: "..",
+          isDir: true
+        });
+        if (!files.length) {
+           res.json(fileList);
+           return;
+        }
+      }
+      const startCount = fileList.length;
       files.forEach(file => {
         const filePath = path.join(filesPath, file);
 
@@ -119,7 +138,7 @@ app.get("/api/files/:subDir?",ensureAuthenticated, (req, res) => {
             isDir: stats.isDirectory()
           });
 
-          if (fileList.length === files.length) {
+          if (fileList.length === files.length + startCount) {
             res.json(fileList);
           }
         });
@@ -131,6 +150,12 @@ app.get("/api/files/:subDir?",ensureAuthenticated, (req, res) => {
 app.get("/api/download/:filename", ensureAuthenticated, (req, res) => {
   const { filename } = req.params;
   const filePath = path.join(__dirname, config.rootFilesPath, filename);
+
+  // Check if the requested file is located within the rootFilesPath directory
+  if (!filePath.startsWith(path.join(__dirname, config.rootFilesPath))) {
+    console.error("Attempted to download a file outside of rootFilesPath directory");
+    return res.status(403).send("Forbidden");
+  }
 
   res.download(filePath, (err) => {
     if (err) {
