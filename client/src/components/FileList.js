@@ -87,6 +87,13 @@ const FileList = ({ currentUser }) => {
     }
   };
 
+  const getProgressObj = (downloadProgress, fileName) => {
+    if (!downloadProgress.hasOwnProperty(fileName)) return undefined;
+    const progressObj = downloadProgress[fileName];
+    if (!progressObj.state) return undefined;
+    return progressObj;
+  };
+
   return (
     <div>
       <h1>Hello, {currentUser.username}!</h1>
@@ -101,12 +108,12 @@ const FileList = ({ currentUser }) => {
           ) : (
             <span>
               {file.name}
-              <button onClick={() => handleFileDownload(getCurrentDir(), file.name)}>Download</button>
               {(() => {
-                if (!downloadProgress.hasOwnProperty(file.name)) return;
-                const progressObj = downloadProgress[file.name];
-                if (!progressObj.state) return;
-                return <span>{" "}{progressObj.state === DownloadStates.DOWNLOADING ? `${progressObj.progress}%` : progressObj.state}</span>;
+                const progressObj = getProgressObj(downloadProgress, file.name);
+                return <span>
+                  <button disabled={progressObj && progressObj.state === DownloadStates.DOWNLOADING} onClick={() => handleFileDownload(getCurrentDir(), file.name)}>Download</button>
+                  {progressObj && <span>{" "}{progressObj.state === DownloadStates.DOWNLOADING ? `${progressObj.progress}%` : progressObj.state}</span>}
+                </span>;
               })()}
             </span>
           )}
