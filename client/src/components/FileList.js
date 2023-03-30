@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import path from "path-browserify";
 import { useNavigate, useLocation } from "react-router-dom";
+import "../css/FileList.css";
 
 const DownloadStates = {
   DOWNLOADING: 'downloading',
@@ -95,31 +96,53 @@ const FileList = ({ currentUser }) => {
   };
 
   return (
-    <div>
-      <h1>Hello, {currentUser.username}!</h1>
-      <h2>File List - {getCurrentDir()}</h2>
-      <ul>
-      {files.map((file, index) => (
-        <li key={index}>
-          {file.isDir ? (
-            <a href="#" onClick={(evt) => handleDirectoryClick(evt, file.name)}>
-              {file.name}
-            </a>
-          ) : (
-            <span>
-              {file.name}
-              {(() => {
-                const progressObj = getProgressObj(downloadProgress, file.name);
-                return <span>
-                  <button disabled={progressObj && progressObj.state === DownloadStates.DOWNLOADING} onClick={() => handleFileDownload(getCurrentDir(), file.name)}>Download</button>
-                  {progressObj && <span>{" "}{progressObj.state === DownloadStates.DOWNLOADING ? `${progressObj.progress}%` : progressObj.state}</span>}
-                </span>;
-              })()}
-            </span>
-          )}
-        </li>
-      ))}
-      </ul>
+    <div className="FileList">
+      <header className="FileList-header">
+        <h1>Hello, {currentUser.username}!</h1>
+      </header>
+      <div className="FileList-content">
+        <h2 className="FileList-section-header">{
+          (() => {
+            const currentDir = getCurrentDir();
+            return currentDir.length === 0 ? "Root" : currentDir;
+          })()
+        }</h2>
+        <ul>
+        {files.map((file, index) => { 
+          const progressObj = getProgressObj(downloadProgress, file.name);
+          return (
+            <li key={index}>
+              <div className="file-info">
+                {file.isDir ? (
+                  <a href="#" onClick={(evt) => handleDirectoryClick(evt, file.name)}>
+                    {file.name}
+                  </a>
+                ) : (
+                  <span>{file.name}</span>
+                )}
+              </div>
+              <div className="file-actions">
+                {!file.isDir && (
+                  <>
+                    <button
+                      disabled={progressObj && progressObj.state === DownloadStates.DOWNLOADING}
+                      onClick={() => handleFileDownload(getCurrentDir(), file.name)}
+                    >Download</button>
+                    {progressObj && (
+                      <span className="progress-text">
+                        {progressObj.state === DownloadStates.DOWNLOADING
+                          ? `${progressObj.progress}%`
+                          : progressObj.state}
+                      </span>
+                    )}
+                  </>
+                )}
+              </div>
+            </li>
+          );
+        })}
+        </ul>
+      </div>
     </div>
   );
 };
