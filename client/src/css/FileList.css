@@ -1,0 +1,81 @@
+/* FileList.css */
+.FileList-header {
+  background-color: #333;
+  padding: 10px 16px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+}
+
+.FileList-header h1 {
+  font-size: 18px;
+  color: white;
+  margin: 0;
+}
+
+.FileList-content {
+  padding-top: 20px;
+}
+
+.FileList-section-header {
+  font-size: 16px;
+  font-weight: 600;
+  color: white;
+  background-color: #4a90e2;
+  padding: 8px 12px;
+  border-radius: 4px;
+  margin-bottom: 10px;
+  margin-top: 20px;
+  display: inline-block;
+}
+
+.FileList ul {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+.FileList li {
+  padding: 12px;
+  background-color: #f4f4f4;
+  border: none;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+}
+
+.FileList li:nth-child(odd) {
+  background-color: #f4f4f4;
+}
+
+.FileList li:nth-child(even) {
+  background-color: #e7e7e7;
+}
+
+.FileList li:not(:last-child) {
+  margin-bottom: 0;
+}
+
+.FileList li .file-info {
+  display: flex;
+  align-items: center;
+  flex-grow: 1;
+}
+
+.FileList li .file-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.FileList button {
+  margin-left: 16px;
+  padding: 4px 8px;
+  font-size: 14px;
+}
+
+.FileList .progress-text {
+  margin-left: 8px;
+}

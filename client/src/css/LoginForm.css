@@ -1,0 +1,21 @@
+/* LoginForm.css */
+.LoginForm form {
+  display: flex;
+  flex-direction: column;
+}
+
+.LoginForm label {
+  margin-bottom: 4px;
+}
+
+.LoginForm input {
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  margin-bottom: 16px;
+}
+
+.LoginForm .error {
+  color: #d9534f;
+  margin-bottom: 16px;
+}
