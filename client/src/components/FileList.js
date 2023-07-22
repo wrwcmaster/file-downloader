@@ -18,6 +18,53 @@ const FileList = ({ currentUser }) => {
   const location = useLocation();
   const navigate = useNavigate();
 
+  // Torrent test
+
+  const [magnetURI, setMagnetURI] = useState('');
+  const [torrents, setTorrents] = useState([]);
+
+  const handleTorrentSubmit = async (event) => {
+    event.preventDefault();
+
+    const response = await fetch('/api/torrent/add', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ magnetURI }),
+    });
+
+    const data = await response.json();
+
+    // Add the torrent to the state
+    setTorrents((prevTorrents) => [...prevTorrents, { id: data.id, name: data.name, size: data.size, progress: 0, done: false }]);
+  };
+
+  const fetchTorrentProgress = async (torrentId) => {
+    const response = await fetch(`/api/torrent/progress/${torrentId}`);
+    const data = await response.json();
+
+    // Update the progress of the torrent
+    setTorrents((prevTorrents) =>
+      prevTorrents.map((t) =>
+        t.id === torrentId ? { ...t, progress: data.progress, done: data.done } : t
+      )
+    );
+  };
+
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      torrents.forEach((torrent) => {
+        if (!torrent.done) {
+          fetchTorrentProgress(torrent.id);
+        }
+      });
+    }, 1000);
+
+    return () => clearInterval(intervalId);
+  }, [torrents]);
+  // End of Torrent test
+
   const getCurrentDir = () => {
     return decodeURIComponent(location.pathname.slice(1));
   };
@@ -100,6 +147,28 @@ const FileList = ({ currentUser }) => {
       <header className="FileList-header">
         <h1>Hello, {currentUser.username}!</h1>
       </header>
+      <div className="FileList-section">
+        <h2>Add Torrent</h2>
+        <form onSubmit={handleTorrentSubmit}>
+          <input
+            type="text"
+            value={magnetURI}
+            onChange={(e) => setMagnetURI(e.target.value)}
+            placeholder="Enter magnet URI"
+          />
+          <button type="submit">Add Torrent</button>
+        </form>
+      </div>
+      <div className="FileList-section">
+        <h2>Torrents</h2>
+        {torrents.map((torrent, index) => (
+          <div key={index}>
+            <h3>{torrent.name}</h3>
+            <p>Size: {(torrent.size / 1024 / 1024).toFixed(2)} MB</p>
+            <p>Progress: {(torrent.progress * 100).toFixed(2)}%</p>
+          </div>
+        ))}
+      </div>
       <div className="FileList-content">
         <h2 className="FileList-section-header">{
           (() => {

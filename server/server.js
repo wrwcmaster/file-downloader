@@ -11,6 +11,12 @@ const LocalStrategy = require("passport-local").Strategy;
 const session = require("express-session");
 const bcrypt = require("bcryptjs");
 
+let torrentClient;
+import('webtorrent').then((webtorrent) => {
+  const WebTorrent = webtorrent.default || webtorrent;
+  torrentClient = new WebTorrent();
+});
+
 // Load configuration from config.json
 const config = require("./config.json");
 
@@ -163,6 +169,49 @@ app.get("/api/download/:filename", ensureAuthenticated, (req, res) => {
       res.status(500).send("Error downloading file");
     }
   });
+});
+
+// Torrent
+
+app.post("/api/torrent/add", ensureAuthenticated, (req, res) => {
+  const { magnetURI } = req.body;
+
+  torrentClient.add(magnetURI, { path: path.join(__dirname, config.rootFilesPath, "torrent") } , (torrent) => {
+    // Torrent download has started
+    res.json({
+      id: torrent.infoHash,
+      name: torrent.name,
+      size: torrent.length
+    });
+
+    torrent.on('done', function(){
+      console.log(`${torrent.name} finished downloading`);
+      torrent.files.forEach(function(file){
+        const oldPath = path.join(__dirname, config.rootFilesPath, "torrent", file.path);
+        const newPath = path.join(__dirname, config.rootFilesPath, file.name);
+        fs.rename(oldPath, newPath, function (err) {
+          if (err) console.error('Error moving file: ', err);
+          else console.log(`Moved ${oldPath} to ${newPath}`);
+        });
+      })
+    })
+  });
+});
+
+app.get("/api/torrent/progress/:torrentId", ensureAuthenticated, (req, res) => {
+  const { torrentId } = req.params;
+  var torrent = undefined;
+  for (const t of torrentClient.torrents) {
+    if (t.infoHash == torrentId) {
+      torrent = t;
+      break;
+    }
+  }
+  if (torrent) {
+    res.json({ id: torrent.infoHash, progress: torrent.progress, done: torrent.done });
+  } else {
+    res.status(404).json({ message: "Torrent not found" });
+  }
 });
 
 // Server
